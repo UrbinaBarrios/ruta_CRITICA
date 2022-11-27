@@ -174,18 +174,34 @@ def agregar_nodo():  # validacion y agregar inputs a array info
     else:
         nuevo_nodo = dict(ID=entry1.get().upper(), descripcion=entry2.get(), duracion=int(entry4.get(
         )), predecesor=entry3.get().upper().split(","), start_node=False, finish_node=False)  # crea dict
-        info.append(nuevo_nodo)  # append en info
-        # append para validacion de id duplicado
-        lista_id.append(entry1.get().upper())
+
         if len(entry3.get()) > 1:  # split para tabla predecesores
             temp = entry3.get().split(",")
+            for id in temp:
+                if id not in lista_id:
+                    messagebox.showinfo(
+                        message='No existe el nodo '+id + ' en la red', title="Error")
+                    return
+
             for id in temp:
                 # append predecesores
                 predecesores.append((entry1.get().upper(), id.upper()))
         else:
             # append predecesores
-            predecesores.append((entry1.get().upper(), entry3.get().upper()))
 
+            if entry3.get().upper() == '':
+                predecesores.append(
+                    (entry1.get().upper(), entry3.get().upper()))
+            elif entry3.get().upper() not in lista_id:
+                messagebox.showinfo(
+                    message='No existe el nodo '+entry3.get().upper() + ' en la red', title="Error")
+                return
+            else:
+                predecesores.append(
+                    (entry1.get().upper(), entry3.get().upper()))
+        info.append(nuevo_nodo)  # append en info
+        # append para validacion de id duplicado
+        lista_id.append(entry1.get().upper())
         label3 = tk.Label(root, text='Actividad agregada', font=(
             'helvetica', 10))  # label actividad agregada
         canvas1.create_window(200, 350, window=label3)
