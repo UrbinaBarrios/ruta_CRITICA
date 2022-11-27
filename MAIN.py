@@ -77,7 +77,8 @@ def getStart():
                             d['predecesor'] = ["Z"]
 
             # agrega el nodo auxiliar a info
-            info.append(aux_node)
+            info.insert(0, aux_node)
+            # info.append(aux_node)
             start_ID = 'Z'
 
         elif cont <= 1:
@@ -165,6 +166,7 @@ def agregar_nodo():  # validacion y agregar inputs a array info
     if not entry1.get().isalpha() or len(entry1.get()) > 1:  # validacion id invalido
         messagebox.showinfo(message="El ID es invalido", title="Error")
         return
+
     if not entry4.get().isnumeric():  # validacion duracion invalida
         messagebox.showinfo(
             message="La duracion debe ser un numero", title="Error")
@@ -188,8 +190,8 @@ def agregar_nodo():  # validacion y agregar inputs a array info
             'helvetica', 10))  # label actividad agregada
         canvas1.create_window(200, 350, window=label3)
 
-        # print(info)
-        # print(predecesores)
+        print(info)
+        print(predecesores)
 
 
 def generar_ruta():
@@ -263,8 +265,10 @@ def generar_ruta():
     while G.nodes[start_node]['start_node'] != False:
 
         for node in G.nodes():
+            print(G.nodes[node]['ID'])
             if G.nodes[node]['finish_node'] == True:
                 G.nodes[node]['LS'] = G.nodes[node]['LF'] - G.nodes[node]['D']
+                print(G.nodes[node]['LS'], G.nodes[node]['ID'])
                 G.nodes[node]['finish_node'] = False
 
                 if G.nodes[node]['predecesor'] != None:
@@ -276,6 +280,10 @@ def generar_ruta():
                         G.nodes[predecesor]['finish_node'] = True
 
                 if G.nodes[node] == G.nodes[start_node]:
+                    if (G.nodes[node]['ID'] == 'Z'):
+                        G.nodes[node]['LS'] = G.nodes[node]['ES']
+                        G.nodes[node]['LF'] = G.nodes[node]['EF']
+
                     G.nodes[node]['start_node'] = False
 
     # Calculo de la holgura de cada actividad
@@ -292,9 +300,11 @@ def generar_ruta():
             if G.nodes[sucesor]['H'] == 0:
                 inicio_CP = G.nodes[sucesor]['ID']
                 critical_path.append(inicio_CP)
+
     # <----------------------------------------- WINDOW POP UP ---------------->
 
     def mostrar_grafo():
+        G.nodes()
         color_map = []
         for node in G.nodes():
             G.nodes[node]['pos_asign'] = False
