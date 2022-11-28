@@ -1,86 +1,48 @@
 import tkinter as tk
 from tkinter import *
+from tkinter import ttk
 from tkinter import messagebox
 import networkx as nx
-import numpy as np
 import math
-import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+mpl.rcParams['toolbar'] = 'None'
 
-info = [] #Array dict para las actividades
+info = []  # Array dict para las actividades
 
+sucesores = []  # array aux suscesores
+predecesores = []  # array aux predecesores
+lista_id = []  # revisar id repetidos
 
-sucesores =[] #array aux suscesores
-predecesores = [] #array aux predecesores
-lista_id = [] #revisar id repetidos
-
-G = nx.DiGraph() # Creación del grafo
-
-
-	# <------------------------------- INICIALIZA LOS INPUTS Y BOTONES DE GRAFO Y DATA ----------------------------->
-root= tk.Tk()
-
-canvas1 = tk.Canvas(root, width=400, height=400, relief='raised')
-canvas1.pack()
-
-label1 = tk.Label(root, text='Camino de rutas crtíticas')
-label1.config(font=('helvetica', 14))
-canvas1.create_window(200, 25, window=label1)
-
-label2 = tk.Label(root, text='Ingrese la identificacion:')
-label2.config(font=('helvetica', 10))
-canvas1.create_window(100, 75, window=label2)
-
-entry1 = tk.Entry(root) 
-canvas1.create_window(250, 75, window=entry1)
-
-label3 = tk.Label(root, text='Ingrese la descripción:')
-label3.config(font=('helvetica', 10))
-canvas1.create_window(100, 125, window=label3)
-
-entry2 = tk.Entry(root) 
-canvas1.create_window(250, 125, window=entry2)
-
-label4 = tk.Label(root, text='Ingrese los predecesores:')
-label4.config(font=('helvetica', 10))
-canvas1.create_window(100, 175, window=label4)
-
-entry3 = tk.Entry(root) 
-canvas1.create_window(250, 175, window=entry3)
-
-label5 = tk.Label(root, text='Ingrese la duración:')
-label5.config(font=('helvetica', 10))
-canvas1.create_window(100, 225, window=label5)
-
-entry4 = tk.Entry(root) 
-canvas1.create_window(250, 225, window=entry4)
-
+G = nx.DiGraph()  # Creación del grafo
 
 def getStart():
-    aux_node = dict( ID = "Z", descripcion = "Auxiliar de inicio", duracion = 0, predecesor = None, start_node = True, finish_node = False)
+    aux_node = dict(ID="Z", descripcion="Auxiliar de inicio", duracion=0,
+                    predecesor=None, start_node=True, finish_node=False)
     cont = 0
-    start_ID=""
+    start_ID = ""
 
-    while start_ID =="":
+    while start_ID == "":
         for p in predecesores:
-            #Cuenta cuántos nodos sin predecesor hay
+            # Cuenta cuántos nodos sin predecesor hay
             if p[1] == "":
-                cont+=1
-        
+                cont += 1
+
         if cont > 1:
             for i in range(len(predecesores)):
-                #convierte el nodo auxiliar en la prelacion de los nodos sin prelacion
+                # convierte el nodo auxiliar en la prelacion de los nodos sin prelacion
                 if predecesores[i][1] == "":
-                    predecesores[i]= (predecesores[i][0], "Z")
+                    predecesores[i] = (predecesores[i][0], "Z")
                     for d in info:
                         if d['ID'] == predecesores[i][0]:
                             d['predecesor'] = ["Z"]
-            
-            #agrega el nodo auxiliar a info
-            info.append(aux_node)
+
+            # agrega el nodo auxiliar a info
+            info.insert(0, aux_node)
+            # info.append(aux_node)
             start_ID = 'Z'
-        
-        elif cont <=1:
+
+        elif cont <= 1:
             for i in range(len(predecesores)):
                 if predecesores[i][1] == "":
                     start_ID = predecesores[i][0]
@@ -92,19 +54,19 @@ def getStart():
 
         else:
             print('Error, no hay nodos sin prelación')
-    
 
     return start_ID
 
+
 def create_sucesores(predecesores):
-    sucesores =[]
+    sucesores = []
     ids = []
     for p in predecesores:
         ids.append(p[0])
 
     ids = list(dict.fromkeys(ids))
     for id in ids:
-            sucesores.append((id, []))
+        sucesores.append((id, []))
 
     for tup in predecesores:
         for i in range(len(sucesores)):
@@ -114,30 +76,33 @@ def create_sucesores(predecesores):
 
     return sucesores
 
+
 def getFinish():
-    aux_node = dict( ID = "X", descripcion = "Auxiliar de inicio", duracion = 0, start_node= False, finish_node = True )
+    aux_node = dict(ID="X", descripcion="Auxiliar de inicio",
+                    duracion=0, predecesor=[], start_node=False, finish_node=True)
     cont = 0
-    end_ID=""
+    end_ID = ""
     sucesores = create_sucesores(predecesores)
 
-
-    while end_ID =="":
+    while end_ID == "":
         for p in sucesores:
-            #Cuenta cuántos nodos sin sucesor hay
+            # Cuenta cuántos nodos sin sucesor hay
             if len(p[1]) == 0:
-                cont+=1
-        
+                cont += 1
+
         if cont > 1:
             for i in range(len(sucesores)):
-                #convierte el nodo auxiliar en el sucesor de los nodos sin sucesor
+                # convierte el nodo auxiliar en el sucesor de los nodos sin sucesor
                 if len(sucesores[i][1]) == 0:
-                    sucesores[i]= (sucesores[i][0], ["X"])
-            
-            #agrega el nodo auxiliar a info
+                    sucesores[i] = (sucesores[i][0], ["X"])
+                    # Se agrega los predecesores al nodo auxiliar
+                    aux_node["predecesor"].append(sucesores[i][0])
+
+            # agrega el nodo auxiliar a info
             info.append(aux_node)
             end_ID = "X"
-        
-        elif cont <=1:
+
+        elif cont <= 1:
             for i in range(len(sucesores)):
                 if len(sucesores[i][1]) == 0:
                     end_ID = sucesores[i][0]
@@ -148,81 +113,118 @@ def getFinish():
 
         else:
             print('Error, no hay nodos sin sucesor')
-    
-    print(sucesores)
+
+    # print(sucesores)
+    print(info)
     return end_ID
 
-def agregar_nodo(): #validacion y agregar inputs a array info
-    
-    if entry1.get() in lista_id: #validacion duplicado
+
+def agregar_nodo():  # validacion y agregar inputs a array info
+
+    if id_input.get() in lista_id:  # validacion duplicado
         messagebox.showinfo(message="El ID esta duplicado", title="Error")
         return
-    if not entry1.get().isalpha() or len(entry1.get()) > 1: #validacion id invalido
+    if not id_input.get().isalpha() or len(id_input.get()) > 1:  # validacion id invalido
         messagebox.showinfo(message="El ID es invalido", title="Error")
-        return 
-    if not entry4.get().isnumeric(): #validacion duracion invalida 
-        messagebox.showinfo(message="La duracion debe ser un numero", title="Error")
-        return         
+        return
+
+    if not dur_input.get().isnumeric():  # validacion duracion invalida
+        messagebox.showinfo(
+            message="La duracion debe ser un numero", title="Error")
+        return
     else:
-        nuevo_nodo = dict( ID = entry1.get().upper(), descripcion = entry2.get(), duracion = int(entry4.get()), predecesor = entry3.get().upper().split(","), start_node = False, finish_node = False) #crea dict
-        info.append(nuevo_nodo) #append en info
-        lista_id.append(entry1.get().upper()) #append para validacion de id duplicado
-        if len(entry3.get()) > 1: #split para tabla predecesores
-            temp = entry3.get().split(",")
+        nuevo_nodo = dict(ID=id_input.get().upper(), descripcion=desc_input.get(), duracion=int(dur_input.get(
+        )), predecesor=pred_input.get().upper().split(","), start_node=False, finish_node=False)  # crea dict
+
+        if len(pred_input.get()) > 1:  # split para tabla predecesores
+            temp = pred_input.get().split(",")
             for id in temp:
-                predecesores.append((entry1.get().upper(),id.upper())) #append predecesores 
+                if id not in lista_id:
+                    messagebox.showinfo(
+                        message='No existe el nodo '+id + ' en la red', title="Error")
+                    return
+
+            for id in temp:
+                # append predecesores
+                predecesores.append((id_input.get().upper(), id.upper()))
         else:
-            predecesores.append((entry1.get().upper(),entry3.get().upper())) #append predecesores
+            # append predecesores
+
+            if pred_input.get().upper() == '':
+                predecesores.append(
+                    (id_input.get().upper(), pred_input.get().upper()))
+            elif pred_input.get().upper() not in lista_id:
+                messagebox.showinfo(
+                    message='No existe el nodo '+pred_input.get().upper() + ' en la red', title="Error")
+                return
+            else:
+                predecesores.append(
+                    (id_input.get().upper(), pred_input.get().upper()))
+        info.append(nuevo_nodo)  # append en info
+        # append para validacion de id duplicado
+        lista_id.append(id_input.get().upper())
         
-        label3 = tk.Label(root, text='Actividad agregada', font=('helvetica', 10)) #label actividad agregada 
-        canvas1.create_window(200, 350, window=label3)
+        success_text = tk.Label(root, text='La actividad ha sido agregada exitosamente.', font=('helvetica', 10))  # Texto de actividad agregada
+        success_text.grid(pady = 8, row = 7, column = 0, columnspan = 2)
+
+        # Se limpian los inputs
+        id_input.delete(0, 'end')
+        desc_input.delete(0, 'end')
+        pred_input.delete(0, 'end')
+        dur_input.delete(0, 'end')
 
         print(info)
         print(predecesores)
 
-        
-def generar_ruta():  
 
-    
-    #Nodos de inicio
+def generar_ruta():
+
+    # Nodos de inicio
     start_node = getStart()
     finish_node = getFinish()
     print(info)
 
     for item in info:
         # Agregamos el nodo al grafo
-        G.add_node(item['ID'], pos=(0,0))
+        G.add_node(item['ID'], pos=(0, 0))
 
         # Asignamos atributos al nodo creado
         G.nodes[item['ID']]['ID'] = item['ID']
         G.nodes[item['ID']]['descripcion'] = item['descripcion']
         G.nodes[item['ID']]['start_node'] = item['start_node']
         G.nodes[item['ID']]['finish_node'] = item['finish_node']
-		# Teniendo una lista de sucesores y predecesores por nodo, podemos aplicar ForwardPass y BacwardPass
-		# en el algoritmo de la ruta crítica.
+        # Teniendo una lista de sucesores y predecesores por nodo, podemos aplicar ForwardPass y BacwardPass
+        # en el algoritmo de la ruta crítica.
+        print(item['predecesor'])
         G.nodes[item['ID']]['predecesor'] = item['predecesor']
         G.nodes[item['ID']]['sucesor'] = []
 
         # Asignamos los atributos que nos permitirán encontrar la ruta crítica
-        G.nodes[item['ID']]['D'] = item['duracion'] # Corresponde a la duración de la actividad
-        G.nodes[item['ID']]['ES'] = 0 # Corresponde al Early Start (Inicio más temprano)
-        G.nodes[item['ID']]['EF'] = 0 # Corresponde al Early Finish (Inicio más tardío)
-        G.nodes[item['ID']]['LS'] = 0 # Corresponde al Late Start (Culminación más temprana)
-        G.nodes[item['ID']]['LF'] = math.inf # Corresponde al Late Finish (Culminación más tardía)
-        G.nodes[item['ID']]['H'] = 0 # Corresponde a la Holgura de la actividad
+        # Corresponde a la duración de la actividad
+        G.nodes[item['ID']]['D'] = item['duracion']
+        # Corresponde al Early Start (Inicio más temprano)
+        G.nodes[item['ID']]['ES'] = 0
+        # Corresponde al Early Finish (Inicio más tardío)
+        G.nodes[item['ID']]['EF'] = 0
+        # Corresponde al Late Start (Culminación más temprana)
+        G.nodes[item['ID']]['LS'] = 0
+        # Corresponde al Late Finish (Culminación más tardía)
+        G.nodes[item['ID']]['LF'] = math.inf
+        # Corresponde a la Holgura de la actividad
+        G.nodes[item['ID']]['H'] = 0
         G.nodes[item['ID']]['posx'] = 0
         G.nodes[item['ID']]['posy'] = 0
-    
+
     # Se agregan las aristas al grafo y se crean los sucesores de cada nodo
     for node in G.nodes():
         if G.nodes[node]['predecesor'] != None:
             for predecesor in G.nodes[node]['predecesor']:
-               G.add_edge(predecesor, node, weight = G.nodes[predecesor]['D'])
+                G.add_edge(predecesor, node, weight=G.nodes[predecesor]['D'])
                 # Al nodo predecesor le asignamos su sucesor
-               G.nodes[predecesor]['sucesor'].append(G.nodes[node]['ID'])
+                G.nodes[predecesor]['sucesor'].append(G.nodes[node]['ID'])
 
-	# Iniciamos el algoritmo de la ruta crítica
-    
+    # Iniciamos el algoritmo de la ruta crítica
+
     # Primero aplicamos el ForwardPass, donde usaremos la lista de actividades sucesoras que hay en cada actividad
     for node in G.nodes():
         G.nodes[node]['EF'] = G.nodes[node]['ES'] + G.nodes[node]['D']
@@ -230,41 +232,48 @@ def generar_ruta():
         for sucesor in list(G.nodes[node]['sucesor']):
             if G.nodes[node]['EF'] > G.nodes[sucesor]['ES']:
                 G.nodes[sucesor]['ES'] = G.nodes[node]['EF']
-                G.nodes[sucesor]['EF'] = G.nodes[sucesor]['ES'] + G.nodes[sucesor]['D']
+                G.nodes[sucesor]['EF'] = G.nodes[sucesor]['ES'] + \
+                    G.nodes[sucesor]['D']
         if G.nodes[node]['predecesor'] != None:
             for predecesor in list(G.nodes[node]['predecesor']):
                 if G.nodes[predecesor]['EF'] > G.nodes[node]['ES']:
                     G.nodes[node]['ES'] = G.nodes[predecesor]['EF']
-                    G.nodes[node]['EF'] = G.nodes[node]['ES'] + G.nodes[node]['D']
+                    G.nodes[node]['EF'] = G.nodes[node]['ES'] + \
+                        G.nodes[node]['D']
 
         if G.nodes[node]['finish_node'] == True:
             G.nodes[node]['LF'] = G.nodes[node]['EF']
 
-    #Ahora aplicamos el BackwardPass, donde usaremos la lista de actividades predecesoras que hay en cada actividad           
+    # Ahora aplicamos el BackwardPass, donde usaremos la lista de actividades predecesoras que hay en cada actividad
     while G.nodes[start_node]['start_node'] != False:
 
         for node in G.nodes():
+            print(G.nodes[node]['ID'])
             if G.nodes[node]['finish_node'] == True:
                 G.nodes[node]['LS'] = G.nodes[node]['LF'] - G.nodes[node]['D']
+                print(G.nodes[node]['LS'], G.nodes[node]['ID'])
                 G.nodes[node]['finish_node'] = False
-                
+
                 if G.nodes[node]['predecesor'] != None:
                     for predecesor in list(G.nodes[node]['predecesor']):
                         if G.nodes[node]['LS'] < G.nodes[predecesor]['LF']:
                             G.nodes[predecesor]['LF'] = G.nodes[node]['LS']
-                            G.nodes[predecesor]['LS'] = G.nodes[predecesor]['LF'] - G.nodes[predecesor]['D']
+                            G.nodes[predecesor]['LS'] = G.nodes[predecesor]['LF'] - \
+                                G.nodes[predecesor]['D']
                         G.nodes[predecesor]['finish_node'] = True
 
-                        
-                       
-                if  G.nodes[node] == G.nodes[start_node]:
+                if G.nodes[node] == G.nodes[start_node]:
+                    if (G.nodes[node]['ID'] == 'Z'):
+                        G.nodes[node]['LS'] = G.nodes[node]['ES']
+                        G.nodes[node]['LF'] = G.nodes[node]['EF']
+
                     G.nodes[node]['start_node'] = False
-    
+
     # Calculo de la holgura de cada actividad
     for node in G.nodes():
         G.nodes[node]['H'] = G.nodes[node]['LS'] - G.nodes[node]['ES']
 
-    #Obtener camíno de la ruta crítica en orden
+    # Obtener camíno de la ruta crítica en orden
     critical_path = []
     inicio_CP = start_node
     critical_path.append(inicio_CP)
@@ -274,15 +283,19 @@ def generar_ruta():
             if G.nodes[sucesor]['H'] == 0:
                 inicio_CP = G.nodes[sucesor]['ID']
                 critical_path.append(inicio_CP)
+
     # <----------------------------------------- WINDOW POP UP ---------------->
+    ax = plt.gca()
+
     def mostrar_grafo():
+        G.nodes()
         color_map = []
         for node in G.nodes():
             G.nodes[node]['pos_asign'] = False
             if G.nodes[node]['H'] == 0:
-                color_map.append(('#fe2f65'))
+                color_map.append(('#dcf763'))
             else:
-                color_map.append(('#39b5f0'))
+                color_map.append(('#bfb7b6'))
 
         # Establecer posición de los nodos
         for node in G.nodes():
@@ -297,9 +310,20 @@ def generar_ruta():
                     acum_y = acum_y + 0.5
                     G.nodes[sucesor]['pos_asign'] = True
 
+                # Añadir detalles
+                node_info = []
+                node_info.append(['ES', G.nodes[sucesor]['ES']])
+                node_info.append(['EF', G.nodes[sucesor]['EF']])
+                node_info.append(['LS', G.nodes[sucesor]['LS']])
+                node_info.append(['LF', G.nodes[sucesor]['LF']])
+                node_info.append(['H', G.nodes[sucesor]['H']])
+                node_info.append(['D', G.nodes[sucesor]['D']])
+                
+                annotation_text = '\n'.join(f'{info[0]}: {info[1]}' for info in node_info)
+                ax.annotate(annotation_text, xy=(G.nodes[sucesor]['posx'], G.nodes[sucesor]['posy']), xytext=(-60, 40), textcoords='offset points', arrowprops=dict(arrowstyle="wedge", fc="#848c8e"), bbox=dict(boxstyle="round", fc="#f1f2ee"))
 
         # Obtener posición de los nodos del grafo
-        pos = nx.get_node_attributes(G,'pos')
+        pos = nx.get_node_attributes(G, 'pos')
 
         options_arrow = {
             'width': 2,
@@ -307,90 +331,118 @@ def generar_ruta():
             'arrowsize': 12,
         }
 
-        dias = []
-        for i in range(G.nodes[start_node]['ES'], G.nodes[finish_node]['EF']):
-            dia = 'día ' + str(i)
-            dias.append(dia)
-
-        mapeado = range(len(dias))
-
         # Configurar la forma de dibujar el grafo
-        nx.draw_networkx_nodes(G, pos, node_color = color_map, node_size=500)
+        nx.draw_networkx_nodes(G, pos, node_color=color_map, node_size=500)
         nx.draw_networkx_edges(G, pos, alpha=0.6, edge_color='black', arrows=True, **options_arrow)
-        nx.draw_networkx_labels(G, pos, font_size=6, font_family='sans-serif')
-        plt.xticks(mapeado, dias) 
-        plt.title('Actividades de la Ruta Crítica (Nodos en Rojo)')
+        nx.draw_networkx_labels(G, pos, font_size=12, font_family='sans-serif')
+        plt.box(False)
+        plt.subplots_adjust(bottom=0, top=0.7)
         plt.show()
+
+
     def open_popup():
         top = Toplevel(root)
-        top.geometry("1024x600")
-            # Título del Reporte
-        label_act = tk.Label(top, fg="#a60338", text="Reporte de Actividades", font=("verdana", 12)).place(x=190, y=15)
+        s = ttk.Style()
+        s.theme_use('clam')
+        s.configure('Treeview.Heading', background = '#dcf763')
 
-        # LEYENDA
-        terminos = tk.Label(top, fg="#a60338", text="Terminos usados en el reporte", font=("verdana", 10)).place(x=790, y=70)
-        termino_D = tk.Label(top, fg="#2d2da7", text="D: Duración", font=("verdana", 10)).place(x=790, y=100)
-        termino_ES = tk.Label(top, fg="#2d2da7", text="ES:", font=("verdana", 10)).place(x=790, y=130)
-        termino_ES1 = tk.Label(top, fg="#2d2da7", text="Early Start (Inicio más temprano)", font=("verdana", 7)).place(x=820, y=130)
-        termino_EF = tk.Label(top, fg="#2d2da7", text="EF:", font=("verdana", 10)).place(x=790, y=160)
-        termino_EF1 = tk.Label(top, fg="#2d2da7", text="Early Finish (Inicio más tardío)", font=("verdana", 7)).place(x=820, y=160)
-        termino_LS = tk.Label(top, fg="#2d2da7", text="LS:", font=("verdana", 10)).place(x=790, y=190)
-        termino_LS1 = tk.Label(top, fg="#2d2da7", text="Late Start (Culminación más temprana)", font=("verdana", 7)).place(x=820, y=190)
-        termino_LF = tk.Label(top, fg="#2d2da7", text="LF:", font=("verdana", 10)).place(x=790, y=220)
-        termino_LF1 = tk.Label(top, fg="#2d2da7", text="Late Finish (Culminación más tardía)", font=("verdana", 7)).place(x=820, y=220)
-        termino_H = tk.Label(top, fg="#2d2da7", text="H: Holgura", font=("verdana", 10)).place(x=790, y=250)
+        # Texto de tabla
+        table_text = Label(top, text="Tabla", font=("verdana", 16, "bold"))
+        table_text.grid(pady = 8, row = 0, column = 0, columnspan = 2)
 
+        # Creación de tabla
+        table_frame = Frame(top)
+        table_frame.grid(pady = 16, padx = 8, row = 2, column = 0, columnspan = 2)
+        table = ttk.Treeview(table_frame, column = ('id', 'desc', 'pred', 'suc', 'dur', 'es', 'ef', 'ls', 'lf', 'h'), show = 'headings', height = 8, selectmode = 'none')
 
-        # TABLA DE REPORTE
-        label_act = tk.Label(top, fg="#2d2da7", text="| Actividad", font=("verdana", 10)).place(x=20, y=50)
-        label_des = tk.Label(top, fg="#2d2da7", text="| Descripción", font=("verdana", 10)).place(x=100, y=50)
-        label_pre = tk.Label(top, fg="#2d2da7", text="| Predecesor", font=("verdana", 10)).place(x=220, y=50)
-        label_suc = tk.Label(top, fg="#2d2da7", text="| Sucesor", font=("verdana", 10)).place(x=320, y=50)
-        label_D = tk.Label(top, fg="#2d2da7", text="| D", font=("verdana", 10)).place(x=420, y=50)
-        label_ES = tk.Label(top, fg="#2d2da7", text="| ES", font=("verdana", 10)).place(x=480, y=50)
-        label_EF = tk.Label(top, fg="#2d2da7", text="| EF", font=("verdana", 10)).place(x=540, y=50)
-        label_LS = tk.Label(top, fg="#2d2da7", text="| LS", font=("verdana", 10)).place(x=600, y=50)
-        label_LF = tk.Label(top, fg="#2d2da7", text="| LF", font=("verdana", 10)).place(x=660, y=50)
-        label_H = tk.Label(top, fg="#2d2da7", text="| H", font=("verdana", 10)).place(x=720, y=50)
+        table.column('id', width = 60, anchor = CENTER)
+        table.column('desc', width = 180, anchor = CENTER)
+        table.column('pred', width = 120, anchor = CENTER)
+        table.column('suc', width = 120, anchor = CENTER)
+        table.column('dur', width = 60, anchor = CENTER)
+        table.column('es', width = 60, anchor = CENTER)
+        table.column('ef', width = 60, anchor = CENTER)
+        table.column('ls', width = 60, anchor = CENTER)
+        table.column('lf', width = 60, anchor = CENTER)
+        table.column('h', width = 80, anchor = CENTER)
 
+        table.heading('id', text='ID')
+        table.heading('desc', text='Descripción')
+        table.heading('pred', text='Predecesores')
+        table.heading('suc', text='Sucesores')
+        table.heading('dur', text='Duración')
+        table.heading('es', text='ES')
+        table.heading('ef', text='EF')
+        table.heading('ls', text='LS')
+        table.heading('lf', text='LF')
+        table.heading('h', text='Holgura')
 
-        # Cada registro completa de cada actividad
-        pos_y = 50
-        aux_predecesor =  {}
-        aux_sucesor = {}
+        table.pack()
+
+        # Se inserta cada actividad en la tabla
         for node in G.nodes():
-            pos_y += 50
-            if G.nodes[node]['predecesor'] == None:
-                aux_predecesor = '--'
+            if(G.nodes[node]['predecesor'] == None):
+                activity_pred = '-'
             else:
-                aux_predecesor = str(G.nodes[node]['predecesor'])
-            if len(G.nodes[node]['sucesor']) == 0:
-                aux_sucesor = '--'
-            else:
-                aux_sucesor = str(G.nodes[node]['sucesor'])
-
-            tk.Label(top, fg="#292931", text="| " + str(node), font=("verdana", 10)).place(x=20, y=pos_y)
-            tk.Label(top, fg="#292931", text="| " + str(G.nodes[node]['descripcion']), font=("verdana", 7)).place(x=100, y=pos_y)
-            tk.Label(top, fg="#292931", text="| " + aux_predecesor, font=("verdana", 10)).place(x=220, y=pos_y)
-            tk.Label(top, fg="#292931", text="| " + aux_sucesor, font=("verdana", 10)).place(x=320, y=pos_y)
-            tk.Label(top, fg="#292931", text="| " + str(G.nodes[node]['D']) + " días", font=("verdana", 10)).place(x=420, y=pos_y)
-            tk.Label(top, fg="#292931", text="| " + str(G.nodes[node]['ES']) + " días", font=("verdana", 10)).place(x=480, y=pos_y)
-            tk.Label(top, fg="#292931", text="| " + str(G.nodes[node]['EF']) + " días", font=("verdana", 10)).place(x=540, y=pos_y)
-            tk.Label(top, fg="#292931", text="| " + str(G.nodes[node]['LS']) + " días", font=("verdana", 10)).place(x=600, y=pos_y)
-            tk.Label(top, fg="#292931", text="| " + str(G.nodes[node]['LF']) + " días", font=("verdana", 10)).place(x=660, y=pos_y)
-            tk.Label(top, fg="#292931", text="| " + str(G.nodes[node]['H']) + " días", font=("verdana", 10)).place(x=720, y=pos_y)
+                activity_pred = G.nodes[node]['predecesor']
             
-        pos_y += 50
-        btn_mostrar_grafo_CP = tk.Button(top, bg='#d15b70', text="Mostrar Grafo de la Ruta Crítica", command = mostrar_grafo, font=("verdana", 10)).place(x=780, y=500)
+            if(not G.nodes[node]['sucesor']):
+                activity_suc = '-'
+            else:
+                activity_suc = G.nodes[node]['sucesor']
+
+            table.insert('', 'end', values = (node, 
+            G.nodes[node]['descripcion'], activity_pred, activity_suc, 
+            G.nodes[node]['D'], G.nodes[node]['ES'], G.nodes[node]['EF'], G.nodes[node]['LS'], 
+            G.nodes[node]['LF'], G.nodes[node]['H']))
+
+        show_button = Button(top, bg='#848c8e', text="Mostrar Grafo", command=mostrar_grafo, font=("verdana", 12))
+        show_button.grid(pady = 8, row = 3, column = 0, columnspan = 2)
 
     open_popup()
 
+# <------------------------------- INICIALIZA LOS INPUTS Y BOTONES DE GRAFO Y DATA ----------------------------->
+root = tk.Tk()
 
-button1 = tk.Button(text='Agregar', command=agregar_nodo, bg='brown', fg='white', font=('helvetica', 9, 'bold'))
-canvas1.create_window(100, 300, window=button1)
+root.title("CPM")
+root.geometry('+600+200')
 
-button2 = tk.Button(text='Generar ruta critica', command=generar_ruta, bg='blue', fg='white', font=('helvetica', 9, 'bold'))
-canvas1.create_window(200, 300, window=button2)           
+# Título 
+title = Label(root, text = "CPM", font=("Helvetica", 16, "bold"))
+title.grid(pady = 8, row = 0, column = 0, columnspan = 10)
 
+# Input de identificación
+id_label = Label(root, text = "Ingrese ID: ", font=('helvetica', 10))
+id_label.grid(padx = 8, pady = 4, row = 1, column = 0)
+
+id_input = Entry(root)
+id_input.grid(padx = 8, row = 1, column = 1)
+
+# Input de descripción
+desc_label = Label(root, text = "Ingrese la descripción: ", font=('helvetica', 10))
+desc_label.grid(padx = 8, pady = 4, row = 2, column = 0)
+
+desc_input = Entry(root)
+desc_input.grid(padx = 8, row = 2, column = 1)
+
+# Input de predecesores
+pred_label = Label(root, text = "Ingrese los predecesores: ", font=('helvetica', 10))
+pred_label.grid(padx = 8, pady = 4, row = 3, column = 0)
+
+pred_input = Entry(root)
+pred_input.grid(padx = 8, row = 3, column = 1)
+
+# Input de duración
+dur_label = Label(root, text = "Ingrese la duración: ", font=('helvetica', 10))
+dur_label.grid(padx = 8, pady = 4, row = 4, column = 0)
+
+dur_input = Entry(root)
+dur_input.grid(padx = 8, row = 4, column = 1)
+
+add_button = Button(text = "Agregar Actividad", width = 16, command = agregar_nodo, bg = '#848c8e', fg = 'black', font = ('helvetica', 12))
+add_button.grid(pady = 8, row = 5, column = 0, columnspan = 2)
+
+generate_button = Button(text= "Realizar CPM", width = 16, command = generar_ruta, bg = '#dcf763', fg= 'black', font = ('helvetica', 12))
+generate_button.grid(pady = 4, row = 6, column = 0, columnspan = 2)
 
 root.mainloop()
