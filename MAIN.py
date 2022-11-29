@@ -17,7 +17,7 @@ lista_id = []  # revisar id repetidos
 G = nx.DiGraph()  # Creación del grafo
 
 def getStart():
-    aux_node = dict(ID="Z", descripcion="Auxiliar de inicio", duracion=0,
+    aux_node = dict(ID="Ini", descripcion="Auxiliar de inicio", duracion=0,
                     predecesor=None, start_node=True, finish_node=False)
     cont = 0
     start_ID = ""
@@ -32,15 +32,14 @@ def getStart():
             for i in range(len(predecesores)):
                 # convierte el nodo auxiliar en la prelacion de los nodos sin prelacion
                 if predecesores[i][1] == "":
-                    predecesores[i] = (predecesores[i][0], "Z")
+                    predecesores[i] = (predecesores[i][0], "Ini")
                     for d in info:
                         if d['ID'] == predecesores[i][0]:
-                            d['predecesor'] = ["Z"]
+                            d['predecesor'] = ["Ini"]
 
             # agrega el nodo auxiliar a info
             info.insert(0, aux_node)
-            # info.append(aux_node)
-            start_ID = 'Z'
+            start_ID = 'Ini'
 
         elif cont <= 1:
             for i in range(len(predecesores)):
@@ -78,8 +77,7 @@ def create_sucesores(predecesores):
 
 
 def getFinish():
-    aux_node = dict(ID="X", descripcion="Auxiliar de inicio",
-                    duracion=0, predecesor=[], start_node=False, finish_node=True)
+    aux_node = dict(ID="Fin", descripcion="Auxiliar final", duracion=0, predecesor=[], start_node=False, finish_node=True)
     cont = 0
     end_ID = ""
     sucesores = create_sucesores(predecesores)
@@ -94,13 +92,13 @@ def getFinish():
             for i in range(len(sucesores)):
                 # convierte el nodo auxiliar en el sucesor de los nodos sin sucesor
                 if len(sucesores[i][1]) == 0:
-                    sucesores[i] = (sucesores[i][0], ["X"])
+                    sucesores[i] = (sucesores[i][0], ["Fin"])
                     # Se agrega los predecesores al nodo auxiliar
                     aux_node["predecesor"].append(sucesores[i][0])
 
             # agrega el nodo auxiliar a info
             info.append(aux_node)
-            end_ID = "X"
+            end_ID = "Fin"
 
         elif cont <= 1:
             for i in range(len(sucesores)):
@@ -118,19 +116,17 @@ def getFinish():
     print(info)
     return end_ID
 
-
 def agregar_nodo():  # validacion y agregar inputs a array info
 
     if id_input.get() in lista_id:  # validacion duplicado
-        messagebox.showinfo(message="El ID esta duplicado", title="Error")
+        messagebox.showinfo(message="El ID está duplicado.", title="Error")
         return
-    if not id_input.get().isalpha() or len(id_input.get()) > 1:  # validacion id invalido
-        messagebox.showinfo(message="El ID es invalido", title="Error")
+    if not id_input.get().isalnum() or len(id_input.get()) > 1:  # validacion id invalido
+        messagebox.showinfo(message="El ID es inválido.", title="Error")
         return
 
     if not dur_input.get().isnumeric():  # validacion duracion invalida
-        messagebox.showinfo(
-            message="La duracion debe ser un numero", title="Error")
+        messagebox.showinfo(message="La duración debe ser un número.", title="Error")
         return
     else:
         nuevo_nodo = dict(ID=id_input.get().upper(), descripcion=desc_input.get(), duracion=int(dur_input.get(
@@ -141,7 +137,7 @@ def agregar_nodo():  # validacion y agregar inputs a array info
             for id in temp:
                 if id not in lista_id:
                     messagebox.showinfo(
-                        message='No existe el nodo '+id + ' en la red', title="Error")
+                        message='No existe el nodo ' + id + ' en la red', title="Error")
                     return
 
             for id in temp:
@@ -155,7 +151,7 @@ def agregar_nodo():  # validacion y agregar inputs a array info
                     (id_input.get().upper(), pred_input.get().upper()))
             elif pred_input.get().upper() not in lista_id:
                 messagebox.showinfo(
-                    message='No existe el nodo '+pred_input.get().upper() + ' en la red', title="Error")
+                    message='No existe el nodo '+pred_input.get().upper() + ' en la red.', title="Error")
                 return
             else:
                 predecesores.append(
@@ -178,6 +174,9 @@ def agregar_nodo():  # validacion y agregar inputs a array info
 
 
 def generar_ruta():
+    if(len(info) == 0):
+        messagebox.showinfo(message="Ingrese al menos una actividad.", title="Error")
+        return
 
     # Nodos de inicio
     start_node = getStart()
@@ -302,6 +301,18 @@ def generar_ruta():
             if G.nodes[node] == start_node:
                 G.nodes[node]['pos_asign'] = True
             acum_y = 0
+
+            node_info = []
+            node_info.append(['ES', G.nodes[node]['ES']])
+            node_info.append(['EF', G.nodes[node]['EF']])
+            node_info.append(['LS', G.nodes[node]['LS']])
+            node_info.append(['LF', G.nodes[node]['LF']])
+            node_info.append(['H', G.nodes[node]['H']])
+            node_info.append(['D', G.nodes[node]['D']])
+            
+            annotation_text = '\n'.join(f'{info[0]}: {info[1]}' for info in node_info)
+            ax.annotate(annotation_text, xy=(G.nodes[node]['posx'], G.nodes[node]['posy']), xytext=(-60, 40), textcoords='offset points', arrowprops=dict(arrowstyle="wedge", fc="#848c8e"), bbox=dict(boxstyle="round", fc="#f1f2ee"))
+
             for sucesor in list(G.nodes[node]['sucesor']):
                 if G.nodes[sucesor]['pos_asign'] == False:
                     G.nodes[sucesor]['posx'] = G.nodes[node]['posx'] + 2
@@ -318,7 +329,7 @@ def generar_ruta():
                 node_info.append(['LF', G.nodes[sucesor]['LF']])
                 node_info.append(['H', G.nodes[sucesor]['H']])
                 node_info.append(['D', G.nodes[sucesor]['D']])
-                
+            
                 annotation_text = '\n'.join(f'{info[0]}: {info[1]}' for info in node_info)
                 ax.annotate(annotation_text, xy=(G.nodes[sucesor]['posx'], G.nodes[sucesor]['posy']), xytext=(-60, 40), textcoords='offset points', arrowprops=dict(arrowstyle="wedge", fc="#848c8e"), bbox=dict(boxstyle="round", fc="#f1f2ee"))
 
@@ -335,6 +346,7 @@ def generar_ruta():
         nx.draw_networkx_nodes(G, pos, node_color=color_map, node_size=500)
         nx.draw_networkx_edges(G, pos, alpha=0.6, edge_color='black', arrows=True, **options_arrow)
         nx.draw_networkx_labels(G, pos, font_size=12, font_family='sans-serif')
+        
         plt.box(False)
         plt.subplots_adjust(bottom=0, top=0.7)
         plt.show()
@@ -398,6 +410,9 @@ def generar_ruta():
 
         show_button = Button(top, bg='#848c8e', text="Mostrar Grafo", command=mostrar_grafo, font=("verdana", 12))
         show_button.grid(pady = 8, row = 3, column = 0, columnspan = 2)
+
+        graph_info = Label(top, text = "La ruta crítica se mostrará en verde.", font=("verdana", 12, "bold"), fg = "#728034")
+        graph_info.grid(pady = 4, row = 4, column = 0, columnspan = 2)
 
     open_popup()
 
