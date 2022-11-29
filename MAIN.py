@@ -8,17 +8,16 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 mpl.rcParams['toolbar'] = 'None'
 
-info = []  # Array dict para las actividades
+info = []  # Array de diccionarios para las actividades
 
-sucesores = []  # array aux suscesores
-predecesores = []  # array aux predecesores
-lista_id = []  # revisar id repetidos
+sucesores = []  # Array auxiliar de sucesores
+predecesores = []  # Array auxiliar de predecesores
+lista_id = []  # Revisar ID repetidos
 
 G = nx.DiGraph()  # Creación del grafo
 
 def getStart():
-    aux_node = dict(ID="Ini", descripcion="Auxiliar de inicio", duracion=0,
-                    predecesor=None, start_node=True, finish_node=False)
+    aux_node = dict(ID="Ini", descripcion="Auxiliar de inicio", duracion=0, predecesor=None, start_node=True, finish_node=False)
     cont = 0
     start_ID = ""
 
@@ -30,7 +29,7 @@ def getStart():
 
         if cont > 1:
             for i in range(len(predecesores)):
-                # convierte el nodo auxiliar en la prelacion de los nodos sin prelacion
+                # Convierte el nodo auxiliar en la prelación de los nodos sin prelación
                 if predecesores[i][1] == "":
                     predecesores[i] = (predecesores[i][0], "Ini")
                     for d in info:
@@ -56,7 +55,6 @@ def getStart():
 
     return start_ID
 
-
 def create_sucesores(predecesores):
     sucesores = []
     ids = []
@@ -75,7 +73,6 @@ def create_sucesores(predecesores):
 
     return sucesores
 
-
 def getFinish():
     aux_node = dict(ID="Fin", descripcion="Auxiliar final", duracion=0, predecesor=[], start_node=False, finish_node=True)
     cont = 0
@@ -90,13 +87,13 @@ def getFinish():
 
         if cont > 1:
             for i in range(len(sucesores)):
-                # convierte el nodo auxiliar en el sucesor de los nodos sin sucesor
+                # Convierte el nodo auxiliar en el sucesor de los nodos sin sucesor
                 if len(sucesores[i][1]) == 0:
                     sucesores[i] = (sucesores[i][0], ["Fin"])
                     # Se agrega los predecesores al nodo auxiliar
                     aux_node["predecesor"].append(sucesores[i][0])
 
-            # agrega el nodo auxiliar a info
+            # Agrega el nodo auxiliar a info
             info.append(aux_node)
             end_ID = "Fin"
 
@@ -112,52 +109,51 @@ def getFinish():
         else:
             print('Error, no hay nodos sin sucesor')
 
-    # print(sucesores)
     print(info)
     return end_ID
 
-def agregar_nodo():  # validacion y agregar inputs a array info
-
-    if id_input.get() in lista_id:  # validacion duplicado
+def agregar_nodo(): 
+    # VALIDACIÓN DE INPUTS
+    if id_input.get() in lista_id:  # Chequeo si está duplicado
         messagebox.showinfo(message="El ID está duplicado.", title="Error")
         return
-    if not id_input.get().isalnum() or len(id_input.get()) > 1:  # validacion id invalido
+    if not id_input.get().isalnum() or len(id_input.get()) > 1:  # Chequeo si el ID es inválido
         messagebox.showinfo(message="El ID es inválido.", title="Error")
         return
 
-    if not dur_input.get().isnumeric():  # validacion duracion invalida
+    if not dur_input.get().isnumeric():  # Chequeo si la duración es un número
         messagebox.showinfo(message="La duración debe ser un número.", title="Error")
         return
-    else:
-        nuevo_nodo = dict(ID=id_input.get().upper(), descripcion=desc_input.get(), duracion=int(dur_input.get(
-        )), predecesor=pred_input.get().upper().split(","), start_node=False, finish_node=False)  # crea dict
 
-        if len(pred_input.get()) > 1:  # split para tabla predecesores
-            temp = pred_input.get().split(",")
+    # SE AGREGA LA ACTIVIDAD AL ARRAY DE DICCIONARIOS
+    else:
+        nuevo_nodo = dict(ID=id_input.get().upper(), descripcion=desc_input.get(), duracion=int(dur_input.get()), predecesor=pred_input.get().replace(" ", "").upper().split(","), start_node=False, finish_node=False)
+
+        if len(pred_input.get()) > 1:  # Split de los predecesores
+            temp = pred_input.get().replace(" ","").split(",")
             for id in temp:
                 if id not in lista_id:
                     messagebox.showinfo(
-                        message='No existe el nodo ' + id + ' en la red', title="Error")
+                        message='No existe la actividad ' + id + '.', title="Error")
                     return
 
             for id in temp:
-                # append predecesores
+                # Se insertan los predecesores
                 predecesores.append((id_input.get().upper(), id.upper()))
         else:
-            # append predecesores
-
+            # Se inserta el predecesor
             if pred_input.get().upper() == '':
-                predecesores.append(
-                    (id_input.get().upper(), pred_input.get().upper()))
+                predecesores.append((id_input.get().upper(), pred_input.get().upper()))
             elif pred_input.get().upper() not in lista_id:
                 messagebox.showinfo(
-                    message='No existe el nodo '+pred_input.get().upper() + ' en la red.', title="Error")
+                    message='No existe la actividad '+ pred_input.get().upper() + '.', title="Error")
                 return
             else:
-                predecesores.append(
-                    (id_input.get().upper(), pred_input.get().upper()))
-        info.append(nuevo_nodo)  # append en info
-        # append para validacion de id duplicado
+                predecesores.append((id_input.get().upper(), pred_input.get().upper()))
+
+        info.append(nuevo_nodo)  # Se inserta en el array de diccionarios
+
+        # Se coloca el ID en una lista especial para futuras validaciones
         lista_id.append(id_input.get().upper())
         
         success_text = tk.Label(root, text='La actividad ha sido agregada exitosamente.', font=('helvetica', 10))  # Texto de actividad agregada
@@ -172,59 +168,54 @@ def agregar_nodo():  # validacion y agregar inputs a array info
         print(info)
         print(predecesores)
 
-
 def generar_ruta():
+    # Se valida si no hay actividad(es)
     if(len(info) == 0):
         messagebox.showinfo(message="Ingrese al menos una actividad.", title="Error")
         return
 
-    # Nodos de inicio
+    # Se detecta el nodo inicial y el nodo final
     start_node = getStart()
     finish_node = getFinish()
     print(info)
 
+    # Por cada actividad, se agregan en el grafo
     for item in info:
-        # Agregamos el nodo al grafo
+        # Se añade la actividad
         G.add_node(item['ID'], pos=(0, 0))
 
-        # Asignamos atributos al nodo creado
+        # Se añaden los atributos al nodo creado
         G.nodes[item['ID']]['ID'] = item['ID']
         G.nodes[item['ID']]['descripcion'] = item['descripcion']
         G.nodes[item['ID']]['start_node'] = item['start_node']
         G.nodes[item['ID']]['finish_node'] = item['finish_node']
-        # Teniendo una lista de sucesores y predecesores por nodo, podemos aplicar ForwardPass y BacwardPass
-        # en el algoritmo de la ruta crítica.
-        print(item['predecesor'])
         G.nodes[item['ID']]['predecesor'] = item['predecesor']
         G.nodes[item['ID']]['sucesor'] = []
 
-        # Asignamos los atributos que nos permitirán encontrar la ruta crítica
-        # Corresponde a la duración de la actividad
+        # Con los array de sucesores y predecesores se puede aplicar ForwardPass y BacwardPass
+
+        # Se asignan los atributos necesarios para CPM
+
         G.nodes[item['ID']]['D'] = item['duracion']
-        # Corresponde al Early Start (Inicio más temprano)
         G.nodes[item['ID']]['ES'] = 0
-        # Corresponde al Early Finish (Inicio más tardío)
         G.nodes[item['ID']]['EF'] = 0
-        # Corresponde al Late Start (Culminación más temprana)
         G.nodes[item['ID']]['LS'] = 0
-        # Corresponde al Late Finish (Culminación más tardía)
         G.nodes[item['ID']]['LF'] = math.inf
-        # Corresponde a la Holgura de la actividad
         G.nodes[item['ID']]['H'] = 0
         G.nodes[item['ID']]['posx'] = 0
         G.nodes[item['ID']]['posy'] = 0
 
-    # Se agregan las aristas al grafo y se crean los sucesores de cada nodo
+    # Se crean los sucesores de cada nodo
     for node in G.nodes():
         if G.nodes[node]['predecesor'] != None:
             for predecesor in G.nodes[node]['predecesor']:
                 G.add_edge(predecesor, node, weight=G.nodes[predecesor]['D'])
-                # Al nodo predecesor le asignamos su sucesor
+                # Al nodo predecesor se le asigna su sucesor
                 G.nodes[predecesor]['sucesor'].append(G.nodes[node]['ID'])
 
-    # Iniciamos el algoritmo de la ruta crítica
+    """ ALGORITMO DE RUTA CRÍTICA """
 
-    # Primero aplicamos el ForwardPass, donde usaremos la lista de actividades sucesoras que hay en cada actividad
+    # Primero se aplica ForwardPass
     for node in G.nodes():
         G.nodes[node]['EF'] = G.nodes[node]['ES'] + G.nodes[node]['D']
 
@@ -243,14 +234,12 @@ def generar_ruta():
         if G.nodes[node]['finish_node'] == True:
             G.nodes[node]['LF'] = G.nodes[node]['EF']
 
-    # Ahora aplicamos el BackwardPass, donde usaremos la lista de actividades predecesoras que hay en cada actividad
+    # Ahora se aplica BackwardPass
     while G.nodes[start_node]['start_node'] != False:
 
         for node in G.nodes():
-            print(G.nodes[node]['ID'])
             if G.nodes[node]['finish_node'] == True:
                 G.nodes[node]['LS'] = G.nodes[node]['LF'] - G.nodes[node]['D']
-                print(G.nodes[node]['LS'], G.nodes[node]['ID'])
                 G.nodes[node]['finish_node'] = False
 
                 if G.nodes[node]['predecesor'] != None:
@@ -262,17 +251,17 @@ def generar_ruta():
                         G.nodes[predecesor]['finish_node'] = True
 
                 if G.nodes[node] == G.nodes[start_node]:
-                    if (G.nodes[node]['ID'] == 'Z'):
+                    if (G.nodes[node]['ID'] == 'Ini'):
                         G.nodes[node]['LS'] = G.nodes[node]['ES']
                         G.nodes[node]['LF'] = G.nodes[node]['EF']
 
                     G.nodes[node]['start_node'] = False
 
-    # Calculo de la holgura de cada actividad
+    # Cálculo de la holgura de cada actividad
     for node in G.nodes():
         G.nodes[node]['H'] = G.nodes[node]['LS'] - G.nodes[node]['ES']
 
-    # Obtener camíno de la ruta crítica en orden
+    # Obtener camino de la ruta crítica en orden
     critical_path = []
     inicio_CP = start_node
     critical_path.append(inicio_CP)
@@ -283,7 +272,8 @@ def generar_ruta():
                 inicio_CP = G.nodes[sucesor]['ID']
                 critical_path.append(inicio_CP)
 
-    # <----------------------------------------- WINDOW POP UP ---------------->
+    
+    """ VISUALIZACIÓN DEL GRAFO """
     ax = plt.gca()
 
     def mostrar_grafo():
@@ -416,7 +406,7 @@ def generar_ruta():
 
     open_popup()
 
-# <------------------------------- INICIALIZA LOS INPUTS Y BOTONES DE GRAFO Y DATA ----------------------------->
+""" INTERFAZ PRINCIPAL """
 root = tk.Tk()
 
 root.title("CPM")
